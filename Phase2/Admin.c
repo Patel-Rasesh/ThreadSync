@@ -11,7 +11,8 @@ FLOW -
 #include "cal-new.c"
 #define MAX_LINE_LENGTH 80
 
-int main(int argc, char **argv) {
+//int main(int argc, char **argv) {
+void pipCommunication(char *argv){
 
     int parentToChild[2];           // File descriptors for Parent to Child pipe
     int childToParent[2];           // File descriptors for Child to Parent pipe
@@ -23,7 +24,8 @@ int main(int argc, char **argv) {
     int processId , bytes;
     char *supp_ptr = NULL;
     char inputTest[100];
-    char *inputFile = argv[1];          // Reading the file name as a user input
+    //char *inputFile = argv[1];          // Reading the file name as a user input
+    char *inputFile = argv;
     FILE *file = fopen(inputFile, "r");
     char *lines = fgets(inputTest, MAX_LINE_LENGTH, file);
     int numberOfLines = strtol(lines, &supp_ptr, 10);
@@ -48,7 +50,8 @@ int main(int argc, char **argv) {
             strcat(message1, "\n");
             close(childToParent[0]);
             write(childToParent[1] , message1 , strlen(message1)+1);        // Sending acknowledgment
-            for(int i=0; i<=sizeof(message1); i++){
+            int i;
+            for(i=0; i<=sizeof(message1); i++){
                 message1[i]='\0';           // Clearing the message variable
             }
             numberOfLines--;
@@ -78,5 +81,5 @@ int main(int argc, char **argv) {
         }
     }
 
-    return 0;
+    //return 0;
 }

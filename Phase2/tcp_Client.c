@@ -12,19 +12,37 @@ FLOW -
 
 ACTION STEPS FOR PHASE 2 - 
 0. Command line input for Ip address and port number
-0a. Communication between two different servers of University
- 
-1. Store the array in the child/Cal process
-
 2. Read the file in client and send it to Sever via socket
-3. Make Admin Socket compatible
-4. Send filename and elements to cal via pipe from Admin
+    Temporarily have created a different c file (for Admin) which handles IPC
+
+ACTION STEPS FOR PHASE 2B - 
+0. Read multiple files - sorting requests (sequencially), give END filename to terminate the connection
+1. Send file (array size and array elements) via socket
+    a. Send entire array via socket at a time
+2. Store it in an array Admin Process
+    a. Develop a queue to ensure no loss of information
+3. Communicate it via pipe to child process
+    a. Sorter Array is File Descriptor in which Admin write to pipe (use Sorter Array as the buffer for the pipe read)
+4. Communication between two servers of university
+
+ACTION STEPS FOR PHASE 3 -
+1. Create threads
 
 */
 #include <stdio.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <string.h>
+#include <stdlib.h>
+
+#define MAX_LINE_LENGTH 80
+
+typedef struct
+{
+    char fileName[1024];
+    int dataArray[1024];
+    int dataSize;
+}Buffer;
 
 int main(void)
 {
@@ -70,29 +88,96 @@ int main(void)
     // 7. Fetch file name from user as command line input
     char clientBuff[200];
     memset(clientBuff, '\0', sizeof(clientBuff));
-    printf("Enter filename for sorter: ");
+    printf("Enter file names sequentially and enter END (without quotes) to exit\n");
     gets(clientBuff);
+    printf("Entered in 1 : %s\n", clientBuff);
+
+    // 8. Check if filename is END
+    char endRequest[] = "END";
+    int fileIterator = 1;
+
+    int check = strcmp(clientBuff, endRequest);
+
+    // 9. Reading file's elements into a buffer
+    FILE *file = fopen(clientBuff, "r");
+    char element[10];
+    fgets(element, MAX_LINE_LENGTH, file);
     
-    // 8. Send file name to Admin process
-    // TODO - In later phases, I will send filename and elements of the array
-    ret = send(adminFD, clientBuff, strlen(clientBuff), 0);
-    if(ret < 0){
-        printf("Failed to send filename to the Admin process!\n");
-        return -1;
+    printf("Length of an array in str %s\n", element);
+    
+    char *supp_ptr = NULL;
+    int lengthOfFile = strtol(element, &supp_ptr, 10);
+    supp_ptr = NULL;
+
+    printf("Length of this input array is %d\n", lengthOfFile);
+    int iterator;
+    int inputArray[lengthOfFile];
+
+    memset(&element, 0, sizeof(element));
+
+    for(iterator=0; iterator<lengthOfFile; iterator++){
+        fgets(element, MAX_LINE_LENGTH, file);
+
+        int elementInt = strtol(element, &supp_ptr, 10);
+        supp_ptr = NULL;
+    
+        inputArray[iterator] = elementInt;
+        memset(&element, 0, sizeof(element));
+    }
+    printf("Elements of the input file are - \n");
+    for(iterator=0; iterator<lengthOfFile; iterator++){
+        printf("%d ", inputArray[iterator]);
+    }
+    printf("\n");
+    
+    
+    Buffer tDataToSend;
+    memset(&tDataToSend, 0, sizeof(Buffer));
+
+    strcpy(tDataToSend.fileName, clientBuff);
+    memcpy(&tDataToSend.dataArray, &inputArray, sizeof(inputArray));
+
+    printf("%s\n", tDataToSend.fileName);
+
+    tDataToSend.dataSize = lengthOfFile;
+    int count = 0;
+    for(count = 0; count < tDataToSend.dataSize; count++)
+    {
+        printf("%d ", tDataToSend.dataArray[count]);
+    }
+    printf("\n");
+    ret = send(adminFD, &tDataToSend, sizeof(tDataToSend), 0);
+
+    while(check != 0){
+
+        // 9. Send file name to Admin process
+        // TODO - Send file content
+        ret = send(adminFD, inputArray, lengthOfFile, 0);
+        //ret = send(adminFD, clientBuff, strlen(clientBuff), 0);
+        if(ret < 0){
+            printf("Failed to send filename to the Admin process!\n");
+            return -1;
+        }
+
+        // 10. Receiving acknowledgement from Admin
+        ret = recv(adminFD, adminBuff, sizeof(adminBuff), 0);
+        if(ret < 0){
+            printf("Failed to receive acknowledgement from Admin process\n");
+            return -1;
+        }
+        else{
+            printf("Successfully received acknowledgment from Admin process and it is as follows - \n");
+            printf("%s\n", adminBuff);
+        }
+        printf("Enter next file --- \n");
+        gets(clientBuff);
+        printf("Entered in %d : %s\n", fileIterator+1, clientBuff);
+        fileIterator++;
+        check = strcmp(clientBuff, endRequest);
     }
 
-    // 9. Receiving acknowledgement from Admin
-    ret = recv(adminFD, adminBuff, sizeof(adminBuff), 0);
-    if(ret < 0){
-        printf("Failed to receive acknowledgement from Admin process\n");
-        return -1;
-    }
-    else{
-        printf("Successfully received acknowledgment from Admin process and it is as follows - \n");
-        printf("%s\n", adminBuff);
-    }
-    
-    // 10. Closing the connection from this client
+    // 11. Closing the connection from this client
+    printf("Requesting to exit ...");
     close(adminFD);
     
     return 0;
