@@ -1,4 +1,4 @@
-#include<stdio.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #define MAX_LINE_LENGTH 80
@@ -9,6 +9,7 @@ typedef struct
     char fileName[1024];
     int dataArray[1024];
     int dataSize;
+    int CID;
 }Buffer;
 
 // Temporary array for intermediate steps
@@ -20,6 +21,9 @@ void print(int array[], int size){
     int iterator;
     for (iterator=0; iterator<=size; iterator++){
         printf("%d ", array[iterator]);
+        if ((iterator+1)%10 == 0){
+            printf("\n");
+        }
     }
     printf("\n");
 }
@@ -67,37 +71,6 @@ void sortHelper(int array[], int low, int high){
 
 int sortDriver(Buffer iReceive){
 
-    //char *inputFile = argv[1];           // Reading filename as a user input
-    //FILE *file = fopen(inputFile, "r");          // Opening the file
-    //char inputTest[100];         // This will store one line from the file at a time
-    //char *supp_ptr = NULL;       // Supplimentary pointer
-    //char *lines = fgets(inputTest, MAX_LINE_LENGTH, file);           // Reading the first line from the file - number of lines
-    //int NFromFile = strtol(lines, &supp_ptr, 10);            // Converting number of lines to an integer
-    //printf("Length of the input array - %d", iReceive.dataSize);
-    //supp_ptr = NULL;
-
-    //int *inputArrayFile = (int *) malloc(NFromFile*sizeof(int *));          // Initializing input Array pointer
-    // int index = 0;
-
-    // //int numberOfElements = NFromFile;
-    // while(numberOfElements != 0){           // Lopping until EOF
-    //    char *elementStr = (char *) malloc(sizeof(char *));            // Initializing the element
-    //    if(NULL == elementStr){
-    //        return 0;
-    //     }
-    //    fgets(inputTest, MAX_LINE_LENGTH, file);         // Reading the next element
-    //    strcpy(elementStr, inputTest);
-    //    int element = strtol(elementStr, &supp_ptr, 10);       // Converting elementStr to integer
-    //    supp_ptr = NULL;
-
-    //    inputArrayFile[index] = element;         // Append to the input array pointer
-    //    index++;
-
-    //    free(elementStr);
-    //    elementStr = NULL;
-    //    numberOfElements--;
-    // }
-
     char *inputFile = iReceive.fileName;
     printf("-------------------------------------------------------------------\n");
     printf("Printing from Sorter ... \n");
@@ -109,9 +82,14 @@ int sortDriver(Buffer iReceive){
     // TODO - Debug required or not - Ask for user input
     int high = iReceive.dataSize;
     int NCopy = iReceive.dataSize;           // Creating a local variable to preserve any manipulation in variable N (length of the array)
+
+    // 1. Initiating merge now
+    printf("Initiating merge operation ...\n");
+    printf("NOTE - by default Debug is kept on\n");
     sortHelper(iReceive.dataArray, GLOBALLOW, high);           // Passing universal low 0 and high (length of the array)
 
     printf("Sorted input array - \n");
+    printf("====================================CID=%d, file=%s, N=%d\n", iReceive.CID, iReceive.fileName, iReceive.dataSize);
     print(iReceive.dataArray, NCopy);
     
     return 1;

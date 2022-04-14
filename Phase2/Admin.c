@@ -38,6 +38,9 @@ void pipCommunication(Buffer iReceive){
         printf("Content of the file is - \n");
         for(count = 0; count < tDataBuffer.dataSize; count++){
             printf("%d ", tDataBuffer.dataArray[count]);
+            if ((count+1)%10 == 0){
+                printf("\n");
+            }
         }
         printf("\n");
 

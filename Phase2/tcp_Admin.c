@@ -100,6 +100,9 @@ int main(void)
             for(count = 0; count < tReceive.dataSize; count++)
             {
                 printf("%d ", tReceive.dataArray[count]);
+                if ((count+1)%10 == 0){
+                    printf("\n");
+                }
             }
             printf("\n");
         }    

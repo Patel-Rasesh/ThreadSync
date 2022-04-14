@@ -1,16 +1,14 @@
 /*
 ACTION STEPS- 
-1. Print merge sort output on each step
-2. Call merge sort from cal
 3. Include CID in the buffer structure
 4. Bring output of the merge sort in the required format
 
-5. Command line input for IP address and port number
-6. Develop a queue in Admin to ensure no loss of information
-7. Communicate it via pipe to child process
+5. Command line input for IP, port, CID, debug
+6. Communication between two servers of university
+
+7. Develop a queue in Admin to ensure no loss of information
+8. Communicate it via pipe to child process
     a. Sorter Array is File Descriptor in which Admin write to pipe (use Sorter Array as the buffer for the pipe read)
-8. Communication between two servers of university
-9. 
 
 */
 #include <stdio.h>
@@ -18,6 +16,7 @@ ACTION STEPS-
 #include <arpa/inet.h>
 #include <string.h>
 #include <stdlib.h>
+#include <time.h>
 
 #define MAX_LINE_LENGTH 80
 
@@ -27,9 +26,11 @@ typedef struct
     char fileName[1024];
     int dataArray[1024];
     int dataSize;
+    int CID;
 }Buffer;
 
 Buffer readFile(char* iFileName){
+    srand(time(NULL));
     /*
     Takes filename as an argument and returns the required structure 
     (filename, input array, and size of the input array) for that input file
@@ -60,6 +61,9 @@ Buffer readFile(char* iFileName){
     printf("Elements of the array are - \n");
     for(iterator=0; iterator<lengthOfFile; iterator++){
         printf("%d ", inputArray[iterator]);
+        if ((iterator+1)%10 == 0){
+            printf("\n");
+        }
     }
     printf("\n");
     
@@ -70,15 +74,11 @@ Buffer readFile(char* iFileName){
     strcpy(oDataToSend.fileName, iFileName);
     memcpy(&oDataToSend.dataArray, &inputArray, sizeof(inputArray));
 
-    //printf("%s\n", oDataToSend.fileName);
-
     oDataToSend.dataSize = lengthOfFile;
-    // int count = 0;
-    // for(count = 0; count < oDataToSend.dataSize; count++)
-    // {
-    //     printf("%d ", oDataToSend.dataArray[count]);
-    // }
-    // printf("\n");
+
+    // Generate a random number - CID and assign them to input array
+    int randomCID = rand();
+    oDataToSend.CID = randomCID;
     return oDataToSend;
 }
 

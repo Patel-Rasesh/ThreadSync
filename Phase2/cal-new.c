@@ -30,6 +30,9 @@ void sortChild(Buffer iReceive){
     printf("Original unsorted array is ----------------\n");
     for(count = 0; count < iReceive.dataSize; count++){
         printf("%d ", iReceive.dataArray[count]);
+        if ((count+1)%10 == 0){
+            printf("\n");
+        }
     }
     printf("\n");
     // 2. Append it to the predetermined sized of array
