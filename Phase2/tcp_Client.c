@@ -1,32 +1,17 @@
 /*
-FLOW - 
-1. Client sends the input to be sorted
-1a. A different terminal tab would have client.exe running
-1b. From where we will send filename (Filename = END suggests closing the connection)
-1c. Each Client should be given a CID 
-2. Client sends three things (CID, FILENAME and N+1 INTEGERS)
-    Why integers when we are sending filename? Our testing environment might not have shared file system - NFS
-3. Admin accepts it via socket
-4. Admin Communicates it to child using pipe
-5. Child is our sorter who sorts it
+ACTION STEPS- 
+0. Pass Buffer structure in pipe communication to Cal
+1. Print merge sort output on each step
+2. Call merge sort from cal
+3. Include CID in the buffer structure
+4. Bring output of the merge sort in the required format
 
-ACTION STEPS FOR PHASE 2 - 
-0. Command line input for Ip address and port number
-2. Read the file in client and send it to Sever via socket
-    Temporarily have created a different c file (for Admin) which handles IPC
-
-ACTION STEPS FOR PHASE 2B - 
-0. Read multiple files - sorting requests (sequencially), give END filename to terminate the connection
-1. Send file (array size and array elements) via socket
-    a. Send entire array via socket at a time
-2. Store it in an array Admin Process
-    a. Develop a queue to ensure no loss of information
-3. Communicate it via pipe to child process
+5. Command line input for IP address and port number
+6. Develop a queue in Admin to ensure no loss of information
+7. Communicate it via pipe to child process
     a. Sorter Array is File Descriptor in which Admin write to pipe (use Sorter Array as the buffer for the pipe read)
-4. Communication between two servers of university
-
-ACTION STEPS FOR PHASE 3 -
-1. Create threads
+8. Communication between two servers of university
+9. 
 
 */
 #include <stdio.h>
@@ -37,12 +22,66 @@ ACTION STEPS FOR PHASE 3 -
 
 #define MAX_LINE_LENGTH 80
 
+// 0. The following structure is used in socket send/receive
 typedef struct
 {
     char fileName[1024];
     int dataArray[1024];
     int dataSize;
 }Buffer;
+
+Buffer readFile(char* iFileName){
+    /*
+    Takes filename as an argument and returns the required structure 
+    (filename, input array, and size of the input array) for that input file
+    */
+    FILE *file = fopen(iFileName, "r");
+    char element[10];
+    fgets(element, MAX_LINE_LENGTH, file);
+    
+    char *supp_ptr = NULL;
+    int lengthOfFile = strtol(element, &supp_ptr, 10);
+    supp_ptr = NULL;
+
+    printf("Length of this input array is %d\n", lengthOfFile);
+    int iterator;
+    int inputArray[lengthOfFile];
+
+    memset(&element, 0, sizeof(element));
+
+    for(iterator=0; iterator<lengthOfFile; iterator++){
+        fgets(element, MAX_LINE_LENGTH, file);
+
+        int elementInt = strtol(element, &supp_ptr, 10);
+        supp_ptr = NULL;
+    
+        inputArray[iterator] = elementInt;
+        memset(&element, 0, sizeof(element));
+    }
+    printf("Elements of the input file are - \n");
+    for(iterator=0; iterator<lengthOfFile; iterator++){
+        printf("%d ", inputArray[iterator]);
+    }
+    printf("\n");
+    
+    // 10. Preparing structure to send filename and input array
+    Buffer oDataToSend;
+    memset(&oDataToSend, 0, sizeof(Buffer));
+
+    strcpy(oDataToSend.fileName, iFileName);
+    memcpy(&oDataToSend.dataArray, &inputArray, sizeof(inputArray));
+
+    printf("%s\n", oDataToSend.fileName);
+
+    oDataToSend.dataSize = lengthOfFile;
+    int count = 0;
+    for(count = 0; count < oDataToSend.dataSize; count++)
+    {
+        printf("%d ", oDataToSend.dataArray[count]);
+    }
+    printf("\n");
+    return oDataToSend;
+}
 
 int main(void)
 {
@@ -98,62 +137,13 @@ int main(void)
 
     int check = strcmp(clientBuff, endRequest);
 
-    // 9. Reading file's elements into a buffer
-    FILE *file = fopen(clientBuff, "r");
-    char element[10];
-    fgets(element, MAX_LINE_LENGTH, file);
-    
-    printf("Length of an array in str %s\n", element);
-    
-    char *supp_ptr = NULL;
-    int lengthOfFile = strtol(element, &supp_ptr, 10);
-    supp_ptr = NULL;
-
-    printf("Length of this input array is %d\n", lengthOfFile);
-    int iterator;
-    int inputArray[lengthOfFile];
-
-    memset(&element, 0, sizeof(element));
-
-    for(iterator=0; iterator<lengthOfFile; iterator++){
-        fgets(element, MAX_LINE_LENGTH, file);
-
-        int elementInt = strtol(element, &supp_ptr, 10);
-        supp_ptr = NULL;
-    
-        inputArray[iterator] = elementInt;
-        memset(&element, 0, sizeof(element));
-    }
-    printf("Elements of the input file are - \n");
-    for(iterator=0; iterator<lengthOfFile; iterator++){
-        printf("%d ", inputArray[iterator]);
-    }
-    printf("\n");
-    
-    
-    Buffer tDataToSend;
-    memset(&tDataToSend, 0, sizeof(Buffer));
-
-    strcpy(tDataToSend.fileName, clientBuff);
-    memcpy(&tDataToSend.dataArray, &inputArray, sizeof(inputArray));
-
-    printf("%s\n", tDataToSend.fileName);
-
-    tDataToSend.dataSize = lengthOfFile;
-    int count = 0;
-    for(count = 0; count < tDataToSend.dataSize; count++)
-    {
-        printf("%d ", tDataToSend.dataArray[count]);
-    }
-    printf("\n");
-    ret = send(adminFD, &tDataToSend, sizeof(tDataToSend), 0);
-
+    // 11. Send input arrays from files until filename = END
     while(check != 0){
 
-        // 9. Send file name to Admin process
-        // TODO - Send file content
-        ret = send(adminFD, inputArray, lengthOfFile, 0);
-        //ret = send(adminFD, clientBuff, strlen(clientBuff), 0);
+        // Getting Buffer from ReadFile function
+        Buffer tDataToSend = readFile(clientBuff);
+        ret = send(adminFD, &tDataToSend, sizeof(tDataToSend), 0);
+
         if(ret < 0){
             printf("Failed to send filename to the Admin process!\n");
             return -1;
@@ -177,7 +167,7 @@ int main(void)
     }
 
     // 11. Closing the connection from this client
-    printf("Requesting to exit ...");
+    printf("Requesting to exit ...\n");
     close(adminFD);
     
     return 0;

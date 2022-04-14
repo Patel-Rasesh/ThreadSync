@@ -14,15 +14,28 @@ FLOW -
 #include <stdlib.h>
 
 #define MAX_LINE_LENGTH 80
+typedef struct
+{
+    char fileName[1024];
+    int dataArray[1024];
+    int dataSize;
+}Buffer;
 
-void test_print(char *argv){
+void test_print(Buffer iReceive){
     // 1. Read the argument in a variable
-    char *inputTest = argv;
+    //int *inputTest = argv;
     printf("-----------------------------------------------------------\n");
     printf("Printing from cal!\n");
     printf("-----------------------------------------------------------\n");
-    printf("Message has been received and it is - %s \n ", inputTest);
+    printf("Message has been received and it is - %s \n ", iReceive.fileName);
 
+    // 0. Original array before sorting
+    int count = 0;
+    printf("Original unsorted array is ----------------\n");
+    for(count = 0; count < iReceive.dataSize; count++){
+        printf("%d ", iReceive.dataArray[count]);
+    }
+    printf("\n");
     // 2. Append it to the predetermined sized of array
     // 2a. Instantiate an array, where first element is the size of the array and the rest are elements
 

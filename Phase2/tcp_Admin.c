@@ -4,13 +4,6 @@
 #include <string.h>
 #include "Admin.c"
 
-typedef struct
-{
-    char fileName[1024];
-    int dataArray[1024];
-    int dataSize;
-}Buffer;
-
 int main(void)
 {
     // 1. Defining file descriptor for Admin process
@@ -80,74 +73,57 @@ int main(void)
     }
     
     // 9. Start receiving messages from clients
-    // char clientBuff[200];
-    // char endRequest[] = "END";
-    // memset(clientBuff, '\0', sizeof(clientBuff));
-    // ret = recv(clientFD, clientBuff, sizeof(clientBuff), 0);
-    // int check = strcmp(clientBuff, endRequest);
-
-    // int clientBuff[7];
-    // //char endRequest[] = "END";
-    // //memset(clientBuff, '\0', sizeof(clientBuff));
-    // ret = recv(clientFD, clientBuff, 7, 0);
-    // printf("Printing INT file \n");
-    // int iterator;
-    // for(iterator=0; iterator<7; iterator++){
-    //     printf("%d", clientBuff[iterator]);
-    // }
-    // printf("\n");
-
-    Buffer tReceive;
-    
+    Buffer tReceive;    
     void *ptr_Receive = NULL;
+    char endRequest[] = "END";
 
-    //memcpy(&tReceive, &tDataToSend, sizeof(Buffer));
-    //tReceive = (Buffer *) malloc(sizeof(Buffer));
     memset(&tReceive, 0, sizeof(Buffer));
     ptr_Receive = (Buffer *)malloc(sizeof(Buffer));
     
     ret = recv(clientFD, ptr_Receive, sizeof(Buffer), 0);
 
     memcpy(&tReceive, ptr_Receive, sizeof(Buffer));
-    printf("%s\n", tReceive.fileName);
+    
+    int check = strcmp(tReceive.fileName, endRequest);
 
-    int count = 0;
-    for(count = 0; count < tReceive.dataSize; count++)
-    {
-        printf("%d\n", tReceive.dataArray[count]);
+    while(check != 0){
+        if (ret < 0){
+            printf("FAILURE in receiving message from client!\n");
+            return -1;
+        }
+        else{
+            printf("Sucessfully received message from the client and it is as follows - : \n");
+            printf("%s\n", tReceive.fileName);
+
+            int count = 0;
+            for(count = 0; count < tReceive.dataSize; count++)
+            {
+                printf("%d\n", tReceive.dataArray[count]);
+            }
+        }    
+        
+        // 10. Acknowledging that message has been received
+        strcpy(adminBuff, "Admin acknowledges!\n");
+        ret = send(clientFD, adminBuff, strlen(adminBuff), 0);
+        if (ret < 0){
+            printf("Admin failed to acknowledge!\n");
+            return -1;
+        }
+        
+        // TODO - 11. Send the client's message to child process - cal process
+        printf("Sending client's message to the child process - cal\n"); 
+        pipCommunication(tReceive);
+        
+        memset(&tReceive, 0, sizeof(Buffer));
+        memset(ptr_Receive, 0, sizeof(ptr_Receive));
+        
+        ret = recv(clientFD, ptr_Receive, sizeof(Buffer), 0);
+        memcpy(&tReceive, ptr_Receive, sizeof(Buffer));
+        
+        check = strcmp(tReceive.fileName, endRequest);
     }
-
-    // int check = strcmp(clientBuff, endRequest);
-
-    // while(check != 0){
-    //     if (ret < 0){
-    //         printf("FAILURE in receiving message from client!\n");
-    //         return -1;
-    //     }
-    //     else{
-    //         printf("Sucessfully received message from the client and it is as follows - : \n");
-    //         printf("%s\n", clientBuff);
-    //     }    
-        
-    //     // 10. Acknowledging that message has been received
-    //     strcpy(adminBuff, "Admin acknowledges!\n");
-    //     ret = send(clientFD, adminBuff, strlen(adminBuff), 0);
-    //     if (ret < 0){
-    //         printf("Admin failed to acknowledge!\n");
-    //         return -1;
-    //     }
-        
-    //     // 11. Send the client's message to child process - cal process
-    //     printf("Sending client's message to the child process - cal\n");
-        
-    //     pipCommunication(clientBuff);
-        
-    //     memset(clientBuff, '\0', sizeof(clientBuff));
-    //     ret = recv(clientFD, clientBuff, sizeof(clientBuff), 0);
-    //     check = strcmp(clientBuff, endRequest);
-    // }
-    // // 12. Close socket and file descriptors
-    // printf("Closing the connection from Admin server now ... \n");
+    // 12. Close socket and file descriptors
+    printf("Closing the connection from Admin server now ... \n");
     close(clientFD);
     close(adminFD);
     
