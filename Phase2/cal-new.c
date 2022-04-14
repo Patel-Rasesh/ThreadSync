@@ -12,24 +12,20 @@ FLOW -
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "MergeSort.c"
 
 #define MAX_LINE_LENGTH 80
-typedef struct
-{
-    char fileName[1024];
-    int dataArray[1024];
-    int dataSize;
-}Buffer;
 
-void test_print(Buffer iReceive){
+
+void sortChild(Buffer iReceive){
+    
     // 1. Read the argument in a variable
-    //int *inputTest = argv;
     printf("-----------------------------------------------------------\n");
-    printf("Printing from cal!\n");
+    printf("Printing from cal process!\n");
     printf("-----------------------------------------------------------\n");
-    printf("Message has been received and it is - %s \n ", iReceive.fileName);
+    printf("Message has been received from file - %s \n ", iReceive.fileName);
 
-    // 0. Original array before sorting
+    // 2. Original array before sorting
     int count = 0;
     printf("Original unsorted array is ----------------\n");
     for(count = 0; count < iReceive.dataSize; count++){
@@ -37,6 +33,7 @@ void test_print(Buffer iReceive){
     }
     printf("\n");
     // 2. Append it to the predetermined sized of array
+    sortDriver(iReceive);
     // 2a. Instantiate an array, where first element is the size of the array and the rest are elements
 
 }

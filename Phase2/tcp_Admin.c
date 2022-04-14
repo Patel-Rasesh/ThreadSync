@@ -93,13 +93,15 @@ int main(void)
         }
         else{
             printf("Sucessfully received message from the client and it is as follows - : \n");
-            printf("%s\n", tReceive.fileName);
+            printf("Filename - %s\n", tReceive.fileName);
 
+            printf("Elements in the file are - \n");
             int count = 0;
             for(count = 0; count < tReceive.dataSize; count++)
             {
-                printf("%d\n", tReceive.dataArray[count]);
+                printf("%d ", tReceive.dataArray[count]);
             }
+            printf("\n");
         }    
         
         // 10. Acknowledging that message has been received
@@ -111,7 +113,7 @@ int main(void)
         }
         
         // TODO - 11. Send the client's message to child process - cal process
-        printf("Sending client's message to the child process - cal\n"); 
+        printf("Sending client's message (via Admin) to the child process - cal\n"); 
         pipCommunication(tReceive);
         
         memset(&tReceive, 0, sizeof(Buffer));

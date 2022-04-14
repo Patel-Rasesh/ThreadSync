@@ -32,7 +32,7 @@ void pipCommunication(Buffer iReceive){
         bytes = read(parentToChild[0] , ptr_Receive, sizeof(Buffer));
         memcpy(&tDataBuffer, ptr_Receive, sizeof(Buffer));
 
-        printf("Parent to Child - command: %s ", tDataBuffer.fileName);
+        printf("Parent to Child - file name: %s ", tDataBuffer.fileName);
         printf("\n");
         
         printf("Content of the file is - \n");
@@ -41,10 +41,12 @@ void pipCommunication(Buffer iReceive){
         }
         printf("\n");
 
-        printf("Sending to child now -------------------------------------\n");
-        test_print(tDataBuffer);             // Reading command from parentToChild pipe and execute it in cal process
+        printf("--------------------------------------------------------\n");
+        printf("Sending to child now \n");
+        printf("--------------------------------------------------------\n");
+        sortChild(tDataBuffer);             // Reading command from parentToChild pipe and execute it in cal process
 
-        strcat(message1, "OK status : ");       // Upon successful completion sending the acknowledgment to Parent
+        strcat(message1, "OK status for : ");       // Upon successful completion sending the acknowledgment to Parent
         strcat(message1, tDataBuffer.fileName);
         strcat(message1, "\n");
         close(childToParent[0]);

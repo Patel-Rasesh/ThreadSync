@@ -1,6 +1,5 @@
 /*
 ACTION STEPS- 
-0. Pass Buffer structure in pipe communication to Cal
 1. Print merge sort output on each step
 2. Call merge sort from cal
 3. Include CID in the buffer structure
@@ -43,7 +42,7 @@ Buffer readFile(char* iFileName){
     int lengthOfFile = strtol(element, &supp_ptr, 10);
     supp_ptr = NULL;
 
-    printf("Length of this input array is %d\n", lengthOfFile);
+    printf("Length of this input array is N = %d\n", lengthOfFile);
     int iterator;
     int inputArray[lengthOfFile];
 
@@ -58,7 +57,7 @@ Buffer readFile(char* iFileName){
         inputArray[iterator] = elementInt;
         memset(&element, 0, sizeof(element));
     }
-    printf("Elements of the input file are - \n");
+    printf("Elements of the array are - \n");
     for(iterator=0; iterator<lengthOfFile; iterator++){
         printf("%d ", inputArray[iterator]);
     }
@@ -71,15 +70,15 @@ Buffer readFile(char* iFileName){
     strcpy(oDataToSend.fileName, iFileName);
     memcpy(&oDataToSend.dataArray, &inputArray, sizeof(inputArray));
 
-    printf("%s\n", oDataToSend.fileName);
+    //printf("%s\n", oDataToSend.fileName);
 
     oDataToSend.dataSize = lengthOfFile;
-    int count = 0;
-    for(count = 0; count < oDataToSend.dataSize; count++)
-    {
-        printf("%d ", oDataToSend.dataArray[count]);
-    }
-    printf("\n");
+    // int count = 0;
+    // for(count = 0; count < oDataToSend.dataSize; count++)
+    // {
+    //     printf("%d ", oDataToSend.dataArray[count]);
+    // }
+    // printf("\n");
     return oDataToSend;
 }
 
@@ -127,9 +126,9 @@ int main(void)
     // 7. Fetch file name from user as command line input
     char clientBuff[200];
     memset(clientBuff, '\0', sizeof(clientBuff));
-    printf("Enter file names sequentially and enter END (without quotes) to exit\n");
+    printf("Sequentially enter file names and enter END (without quotes) to exit\n");
     gets(clientBuff);
-    printf("Entered in 1 : %s\n", clientBuff);
+    printf("Entered in file number 1 : %s\n", clientBuff);
 
     // 8. Check if filename is END
     char endRequest[] = "END";
@@ -161,7 +160,7 @@ int main(void)
         }
         printf("Enter next file --- \n");
         gets(clientBuff);
-        printf("Entered in %d : %s\n", fileIterator+1, clientBuff);
+        printf("Entered in file number %d : %s\n", fileIterator+1, clientBuff);
         fileIterator++;
         check = strcmp(clientBuff, endRequest);
     }
