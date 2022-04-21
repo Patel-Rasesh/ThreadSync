@@ -1,80 +1,134 @@
 #include <stdio.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <memory.h>
-#include "cal-new.c"
-#define MAX_LINE_LENGTH 80
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <string.h>
+#include "adminOld.c"
 
-void pipCommunication(Buffer iReceive){
-
-    int parentToChild[2];           // File descriptors for Parent to Child pipe
-    int childToParent[2];           // File descriptors for Child to Parent pipe
-    char message1[200] = {'\0'};            // Initializing a message for IPC - inter process communication
-    pipe(parentToChild);            // Making pipes
-    pipe(childToParent);
-    int processId , bytes;
-    char *supp_ptr = NULL;
-    if((processId = fork())== -1){
-        printf("error while creating a child process");
+int main(void)
+{
+    // 1. Defining file descriptor for Admin process
+    int adminFD;
+    
+    // 2. Defining Socket address for later configuration of port and IP address
+    struct sockaddr_in adminAddress;
+    
+    // 3. Defining and initializing Admin side message buffer
+    char adminBuff[200];
+    memset(adminBuff, '\0', sizeof(adminBuff));
+    
+    // 4. Socket creation with pre-configured parameters
+    printf("Creating socket now ... \n");
+    adminFD = socket(AF_INET, SOCK_STREAM, 0);
+    
+    if(adminFD < 0){
+        printf("ERROR - Could not create socket!\n");
+        return -1;
     }
-    char readBuffer[120];           // This will store message being read and written from the pipe
-    Buffer tDataBuffer;
+    else{
+        printf("Socket is created successfully!\n");
+    }    
+    
+    // 5. Setting PORT and IP address
+    adminAddress.sin_addr.s_addr = inet_addr("10.176.92.16");
+    adminAddress.sin_port = htons(3490);
+    adminAddress.sin_family = AF_INET;
+    
+    // 6. Binding the created socket to given IP and PORT
+    int ret;
+    ret = bind(adminFD, (struct sockaddr*)&adminAddress, sizeof(adminAddress));
+    if(ret<0){
+        printf("FAILURE while binding!\n");
+        return -1;
+    }
+    else{
+        printf("Binding established!\n");
+    }
+    
+    // 7. Start listening to incoming client connection requests
+    ret = listen(adminFD, 1);
+    if(ret < 0){
+        printf("FAILURE while listening!\n");
+        return -1;
+    }
+    else{
+        printf("Listening established!\n");
+    }
+    
+    // 8. Start accepting connection requests
+    struct sockaddr_in clientAddress;
+    int clientBuffSize = sizeof(clientAddress);
+    int clientFD;
+    clientFD = accept(adminFD, (struct sockaddr*)&clientAddress, &clientBuffSize);
+    
+    // Handling if something goes wrong
+    if (clientFD < 0){
+        printf("Client could not establish connection!\n");
+        return -1;
+    }
+    else{
+        // Using clientAddress to fetch what PORT and IP it is connected to
+        printf("Client is successfully connected to IP :%s at PORT: %i \n", inet_ntoa(clientAddress.sin_addr), ntohs(clientAddress.sin_port));
+    }
+    
+    // 9. Start receiving messages from clients
+    Buffer tReceive;    
     void *ptr_Receive = NULL;
-    int count = 0;
+    char endRequest[] = "End";
 
-    if(processId == 0){
-        close(parentToChild[1]);            // Upon receiving a message (command) from Parent
+    memset(&tReceive, 0, sizeof(Buffer));
+    ptr_Receive = (Buffer *)malloc(sizeof(Buffer));
+    
+    ret = recv(clientFD, ptr_Receive, sizeof(Buffer), 0);
 
-        // Read from parent into a pointer and copy that pointer to respective variables (i.e. filename, input array, CID)
-        memset(&tDataBuffer, 0, sizeof(Buffer));
-        ptr_Receive = (Buffer *)malloc(sizeof(Buffer));
+    memcpy(&tReceive, ptr_Receive, sizeof(Buffer));
+    
+    int check = strcmp(tReceive.fileName, endRequest);
 
-        bytes = read(parentToChild[0] , ptr_Receive, sizeof(Buffer));
-        memcpy(&tDataBuffer, ptr_Receive, sizeof(Buffer));
+    while(check != 0){
+        if (ret < 0){
+            printf("FAILURE in receiving message from client!\n");
+            return -1;
+        }
+        else{
+            printf("Sucessfully received message from the client and it is as follows - : \n");
+            printf("Filename - %s\n", tReceive.fileName);
 
-        printf("Parent to Child - file name: %s ", tDataBuffer.fileName);
-        printf("\n");
-        
-        printf("Content of the file is - \n");
-        for(count = 0; count < tDataBuffer.dataSize; count++){
-            printf("%d ", tDataBuffer.dataArray[count]);
-            if ((count+1)%10 == 0){
-                printf("\n");
+            printf("Elements in the file are - \n");
+            int count = 0;
+            for(count = 0; count < tReceive.dataSize; count++)
+            {
+                printf("%d ", tReceive.dataArray[count]);
+                if ((count+1)%10 == 0){
+                    printf("\n");
+                }
             }
+            printf("\n");
+        }    
+        
+        // 10. Acknowledging that message has been received
+        strcpy(adminBuff, "Admin acknowledges!\n");
+        ret = send(clientFD, adminBuff, strlen(adminBuff), 0);
+        if (ret < 0){
+            printf("Admin failed to acknowledge!\n");
+            return -1;
         }
-        printf("\n");
-
-        printf("--------------------------------------------------------\n");
-        printf("Sending to child now \n");
-        printf("--------------------------------------------------------\n");
-        sortChild(tDataBuffer);             // Reading command from parentToChild pipe and execute it in cal process
-
-        strcat(message1, "OK status for : ");       // Upon successful completion sending the acknowledgment to Parent
-        strcat(message1, tDataBuffer.fileName);
-        strcat(message1, "\n");
-        close(childToParent[0]);
-        write(childToParent[1] , message1 , strlen(message1)+1);        // Sending acknowledgment
-        int i;
-        for(i=0; i<=sizeof(message1); i++){
-            message1[i]='\0';           // Clearing the message variable
-        }
-        memset(&tDataBuffer, 0, sizeof(Buffer));
+        
+        //11. Send the client's message to child process - cal process
+        printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>Sending client's message (via Admin) to the child process - cal\n"); 
+        pipCommunication(tReceive);
+        
+        memset(&tReceive, 0, sizeof(Buffer));
         memset(ptr_Receive, 0, sizeof(ptr_Receive));
+        
+        ret = recv(clientFD, ptr_Receive, sizeof(Buffer), 0);
+        memcpy(&tReceive, ptr_Receive, sizeof(Buffer));
+        
+        check = strcmp(tReceive.fileName, endRequest);
     }
-
-    if(processId !=0 ){
-        printf("---------------------------------------------------------------------------------------\n");
-        printf("returned-pid is %d and PID is %d\n", processId, getpid());
-        printf("---------------------------------------------------------------------------------------\n");
-
-        close(parentToChild[0]);
-        write(parentToChild[1] , &iReceive, sizeof(Buffer));
-
-        close(childToParent[1]);
-        bytes = read(childToParent[0] , readBuffer , sizeof(readBuffer));
-
-        printf("Child to Parent - acknowledgment : ");
-        printf("%s", readBuffer);
-        printf("-------------------------------------------------------------------------------------------------\n");
-    }
+    // 12. Close socket and file descriptors
+    printf("Closing the connection from Admin server now ... \n");
+    close(clientFD);
+    close(adminFD);
+    
+    return 0;
 }

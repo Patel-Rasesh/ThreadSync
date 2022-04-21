@@ -16,18 +16,17 @@ FLOW -
 
 #define MAX_LINE_LENGTH 80
 
-
 void sortChild(Buffer iReceive){
     
     // 1. Read the argument in a variable
     printf("-----------------------------------------------------------\n");
     printf("Printing from cal process!\n");
     printf("-----------------------------------------------------------\n");
-    printf("Message has been received from file - %s \n ", iReceive.fileName);
+    printf("Message has been received from file - %s \n", iReceive.fileName);
 
     // 2. Original array before sorting
     int count = 0;
-    printf("Original unsorted array is ----------------\n");
+    printf("Child - Original unsorted array is ----------------\n");
     for(count = 0; count < iReceive.dataSize; count++){
         printf("%d ", iReceive.dataArray[count]);
         if ((count+1)%10 == 0){
@@ -35,7 +34,6 @@ void sortChild(Buffer iReceive){
         }
     }
     printf("\n");
-    // 2. Append it to the predetermined sized of array
     sortDriver(iReceive);
     // 2a. Instantiate an array, where first element is the size of the array and the rest are elements
 

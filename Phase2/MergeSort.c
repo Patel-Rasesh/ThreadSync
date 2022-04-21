@@ -28,7 +28,7 @@ void print(int array[], int size){
     printf("\n");
 }
 
-void mergeSort(int inputArray[], int low, int mid, int high) {
+void mergeSort(int inputArray[], int low, int mid, int high, Buffer iReceive) {
    int runner1, runner2, index;
 
    for(runner1 = low, runner2 = mid + 1, index = low; runner1 <= mid && runner2 <= high; index++) {
@@ -47,15 +47,17 @@ void mergeSort(int inputArray[], int low, int mid, int high) {
    for(index = low; index <= high; index++)
       inputArray[index] = helperArray[index];
     
+    //if (iReceive.debug == 1){
     if (Debug){
-        printf("Intermediate Step %d gives - \n", step);
+        printf("====================================CID=%d, file=%s, N=%d, L=%d\n", iReceive.CID, iReceive.fileName, iReceive.dataSize, step);
         step++;
-        print(inputArray, sizeof(inputArray));
+        //print(inputArray, sizeof(inputArray));
+        print(inputArray, iReceive.dataSize);
         printf("\n");
     }
 }
 
-void sortHelper(int array[], int low, int high){
+void sortHelper(int array[], int low, int high, Buffer iReceive){
     int mid;
 
     // Base condition for recursive call
@@ -64,14 +66,14 @@ void sortHelper(int array[], int low, int high){
     }
     mid = (low + high)/2;
     mid = low + (high-low)/2;
-    sortHelper(array, low, mid);
-    sortHelper(array, mid+1, high);
-    mergeSort(array, low, mid, high);
+    sortHelper(array, low, mid, iReceive);
+    sortHelper(array, mid+1, high, iReceive);
+    mergeSort(array, low, mid, high, iReceive);
 }
 
 int sortDriver(Buffer iReceive){
 
-    char *inputFile = iReceive.fileName;
+    //char *inputFile = iReceive.fileName;
     printf("-------------------------------------------------------------------\n");
     printf("Printing from Sorter ... \n");
     printf("-------------------------------------------------------------------\n");
@@ -85,9 +87,8 @@ int sortDriver(Buffer iReceive){
 
     // 1. Initiating merge now
     printf("Initiating merge operation ...\n");
-    printf("NOTE - by default Debug is kept on\n");
-    sortHelper(iReceive.dataArray, GLOBALLOW, high);           // Passing universal low 0 and high (length of the array)
 
+    sortHelper(iReceive.dataArray, GLOBALLOW, high, iReceive);           // Passing universal low 0 and high (length of the array)
     printf("Sorted input array - \n");
     printf("====================================CID=%d, file=%s, N=%d\n", iReceive.CID, iReceive.fileName, iReceive.dataSize);
     print(iReceive.dataArray, NCopy);
