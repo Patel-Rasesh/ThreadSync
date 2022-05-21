@@ -1,5 +1,5 @@
 # Threading the sorter - Merge Sort
-Here, the expection is divided into phases -  
+Here, the expectation is divided into phases -  
 
 ## For phase 1 -  
 Implement the sorting/merging functions in a sequential manner following the structure given in the problem description. Read from a file and initialize the pointer to the beginning of the data segment in the array, and the data segment size as input parameters. Then, call the main driver function to invoke the sorting and merging functions multiple times with the proper input parameters.  
